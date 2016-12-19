@@ -87,20 +87,116 @@ Drive Capacity: 15 GiB Free, 18 GiB Total
 
 ログにアクセスキーとシークレットキーが表示されますので、Webインターフェイスやコードからアクセスするときに使用します。
 
-試しに http://localhost にアクセスすると、MinioのWebインターフェイスが表示されますので、ログインしていじってみます。
+試しに http://localhost にアクセスすると、MinioのWebインターフェイスが表示されますので、ログインしていじってみます。この時、いくつかBucketを作成しておいてください。サンプルコードでBucketのリストを表示してみます。
 
 ### ScalaコードからMinioにアクセスしてみる
 
-TODO
+`minimal-scala`プロジェクトを作成します。
+
+```
+>activator new sample-minio minimal-scala
+ACTIVATOR_HOME=C:\tools\activator-1.3.10-minimal
+ファイル BIN_DIRECTORY\..\conf\sbtconfig.txt が見つかりません。
+
+Fetching the latest list of templates...
+
+OK, application "sample-minio" is being created using the "minimal-scala" template.
+
+To run "sample-minio" from the command line, "cd sample-minio" then:
+C:\Users\u6kyu\Documents\sample-minio\sample-minio/activator run
+
+To run the test for "sample-minio" from the command line, "cd sample-minio" then:
+C:\Users\u6kyu\Documents\sample-minio\sample-minio/activator test
+
+To run the Activator UI for "sample-minio" from the command line, "cd sample-minio" then:
+C:\Users\u6kyu\Documents\sample-minio\sample-minio/activator ui
+```
+
+`build.sbt`を編集します。
+
+- `scalaVersion`を`2.11.8`に変更
+- `libraryDependencies`を`aws-java-sdk`のみに変更
+
+```
+name := """sample-minio"""
+
+version := "1.0"
+
+scalaVersion := "2.11.8"
+
+libraryDependencies += "com.amazonaws" % "aws-java-sdk" % "1.11.68"
+```
+
+余分なファイルを削除します。
+
+- `src/test/`フォルダを削除
+- `src/main/scala/com/`フォルダを削除
+
+`Main.scala`を作成します。
+
+- `accessKey`変数に、アクセスキーを設定
+- `secretKey`変数に、シークレットキーを設定
+
+```
+import scala.collection.JavaConverters._
+
+import com.amazonaws._
+import com.amazonaws.auth._
+import com.amazonaws.regions.Region
+import com.amazonaws.regions.Regions
+import com.amazonaws.services.s3._
+import com.amazonaws.services.s3.model._
+
+object Main {
+
+    def main(args: Array[String]): Unit = {
+        val accessKey = "*****"
+        val secretKey = "++++++++++"
+        val credentials = new BasicAWSCredentials(accessKey, secretKey)
+
+        val config = new ClientConfiguration
+
+        val s3 = new AmazonS3Client(credentials, config)
+        val useast1 = Region.getRegion(Regions.US_EAST_1)
+        s3.setRegion(useast1)
+        s3.setEndpoint("http://localhost")
+
+        val buckets = s3.listBuckets
+        for (bucket <- buckets.asScala) {
+            println(bucket.getName)
+        }
+    }
+
+}
+```
+
+実行します。あらかじめ作成したBucketのリストが表示されたことを確認します。
+
+```
+>activator run
+ACTIVATOR_HOME=C:\tools\activator-1.3.10-minimal
+ファイル BIN_DIRECTORY\..\conf\sbtconfig.txt が見つかりません。
+[info] Loading project definition from C:\Users\u6kyu\Documents\sample-minio\sample-minio\project
+[info] Set current project to sample-minio (in build file:/C:/Users/u6kyu/Documents/sample-minio/sample-minio/)
+[info] Compiling 1 Scala source to C:\Users\u6kyu\Documents\sample-minio\sample-minio\target\scala-2.11\classes...
+[info] Running Main
+bar
+boo
+foo
+sample
+[success] Total time: 20 s, completed 2016/12/19 18:27:47
+```
 
 ## まとめ
 
-TODO
+S3アクセスと認証処理のみ異なりますが、他は同様にアクセスできることが確認できました。MinioはS3のローカル環境として利用できそうだと考えます。
 
 ## 関連リンク
 
-- [u6k.blog()](http://blog.u6k.me)
-- TODO: GitHubリポジトリ
+- GitHub
+    - [u6k/sample-minio](https://github.com/u6k/sample-minio)
+- Author
+    - [u6k.blog()](http://blog.u6k.me)
 
 ## ライセンス
 
